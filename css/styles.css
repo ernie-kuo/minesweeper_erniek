@@ -1,3 +1,35 @@
+body {
+    color : white;
+}
+
 h1 {
     color: red;
 }
+
+.cell {
+    width: 20px;
+    height: 20px;
+    border: 1px solid red;
+}
+
+.default {
+    background: rgb(126, 126, 126);
+}
+
+
+.revealed {
+    background: blue;
+}
+
+/* .hint {
+    background: rgb(150, 150, 255);
+} */
+
+.mine {
+    background: black!important;
+}
+
+/* 
+.board {
+    
+} */
