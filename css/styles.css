@@ -1,21 +1,27 @@
 body {
     color : white;
+    text-align: center;
 }
 
 h1 {
     color: red;
 }
 
-.cell {
+table {
+    margin: 0 auto;
+}
+
+button.restart {
+    text-align: center;
+    margin: 10px auto;
+}
+
+td {
     width: 20px;
     height: 20px;
     border: 1px solid red;
-}
-
-.default {
     background: rgb(126, 126, 126);
 }
-
 
 .revealed {
     background: blue;
@@ -27,8 +33,12 @@ h1 {
 
 .mine {
     background: black!important;
+    border-radius: 50%;
 }
 
+.flag {
+    background: red;
+}
 /* 
 .board {
     
