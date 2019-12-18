@@ -1,6 +1,8 @@
 body {
-    color : white;
+    color : black;
+    background: lightblue;
     text-align: center;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
 }
 
 h1 {
@@ -9,6 +11,7 @@ h1 {
 
 table {
     margin: 0 auto;
+    background: gray;
 }
 
 button.restart {
@@ -20,16 +23,13 @@ td {
     width: 20px;
     height: 20px;
     border: 1px solid red;
+    color : white;
     background: rgb(126, 126, 126);
 }
 
 .revealed {
     background: blue;
 }
-
-/* .hint {
-    background: rgb(150, 150, 255);
-} */
 
 .mine {
     background: black!important;
@@ -39,7 +39,17 @@ td {
 .flag {
     background: red;
 }
-/* 
-.board {
-    
-} */
+
+.display {
+    color: black;
+    margin: 10px auto;
+}
+
+.game-over {
+    color: red;
+    font-size: 50px;
+}
+
+.hide {
+    display: none;
+}

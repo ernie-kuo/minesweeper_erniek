@@ -1,20 +1,28 @@
 /*----- cached element references -----*/
-
-const $tbodyBtn = $('.board-tbody')
+const $tableContainer = $('.table-container')
+const $table = $('.board-table')
 const $restartBtn = $('.restart')
+const $difficulty = $('.difficulty')
+const $diplay = $('.display')
+const $totalMines = $('.total-mines')
+const $time = $('.time')
+const $win = $('.win')
+const $lose = $('.lose')
 /*----- event listeners -----*/
 
 $(document).ready(function() {
+    var timer
+    var timeUsedInSeconds
     var game
-    init()
-    attachListeners()
+    var clickCount
+    createBoardTable(EASY_MODE)
+    $restartBtn.on('click', restart)
+    $difficulty.on('change', changeDifficulty)
+    // init()
 })
 
 
 /*----- constants -----*/
-// const TOTAL_NUMBER_MINES_LV1 = 10
-// const TOTAL_NUMBER_MINES_LV2
-// const TOTAL_NUMBER_MINES_LV3
 
 const EASY_MODE = {
     totalMine : 15,
@@ -26,13 +34,19 @@ const MEDIUM_MODE = {
     width : 15,
     height : 15
 }
-
+const HARD_MODE = {
+    totalMine: 70,
+    width: 20,
+    height: 20
+}
 
 const MINE_CSS = "mine"
 const REVEALED_CSS = "revealed"
 const DEFAULT_CSS = "default"
 const FLAG_CSS = "flag"
 const CLICKABLE_CSS = "clickable"
+const UNCLICKABLE_CSS = "unclickable"
+const HIDE_CSS = "hide"
 
 
 /*----- functions -----*/
@@ -55,6 +69,8 @@ class Cell {
     getID() {
         return '#' + this.x + this.y;
     }
+
+    
 }
 
 class Game {
@@ -200,10 +216,6 @@ class Game {
     isWin() {
         return this.getNumOfOpenCells() === (this.getSizeOfBoard() - this.difficulty.totalMine)
     }
-
-    isGameOver() {
-        
-    }
 }
 
 // Set state to default or starting state:
@@ -212,26 +224,62 @@ class Game {
 // Populates mines randomly over the grids -- populateMines()
 // Populates hints around mines
 // Call render
-function init() {
-    game = new Game(EASY_MODE)
+function init(difficulty = EASY_MODE) {
+    // console.log('global int()')
+    game = new Game(difficulty)
+    clickCount = 0
+    timeUsedInSeconds = 0
     game.init()
     // attachListeners()
+    $totalMines.text(game.difficulty.totalMine);
     render()
 }
 
+function restart() {
+    if (timeUsedInSeconds > 0){
+        console.log("clearInterval trigger  ")
+        clearInterval(timer)
+    }
+    init(game.difficulty)
+    clearClassesAndContent()
+    resetDisplay()
+}
+
+function createBoardTable(difficulty) {
+    $table.html("")
+    let table = $table[0]
+    for (let i = 0; i < difficulty.width; i++) {
+        let tr = table.insertRow()
+        for (let j = 0; j < difficulty.height; j++) {
+            let td = tr.insertCell()
+            td.id = '' + i + j
+        }
+    }
+    init(difficulty)
+    attachListeners()
+}
+
 function attachListeners() {
-    $tbodyBtn.on('click', 'td', cellClicked)
-    $tbodyBtn.on('contextmenu', 'td', markFlag)
-    $restartBtn.on('click', restart)
+    $table.on('click', 'td', cellClicked)
+    $table.on('contextmenu', 'td', markFlag)
+}
+
+function removeListners() {
+    $table.off('click', 'td', cellClicked)
+    $table.off('contextmenu', 'td', markFlag)
 }
 
 // Changed the view based on state
 function render() {
+
     for (let columns of game.board) {
         for (let cell of columns) {
             // console.log(grid)
             let cellID = cell.getID()
             let $cellEle = $(cellID)
+            if (game.isGameOver || game.isWin()) {
+                $cellEle.addClass(UNCLICKABLE_CSS)
+            }
             if (cell.hasRevealed) {
                 $cellEle.addClass(REVEALED_CSS)
                 if (cell.isMine) {
@@ -246,9 +294,11 @@ function render() {
     }
     
     if (game.isWin()) {
-        alert("YOU WIN!")
+        $win.removeClass(HIDE_CSS)
+        clearInterval(timer)
     } else if (game.isGameOver) {
-        alert('TRY AGAIN!')
+        $lose.removeClass(HIDE_CSS)
+        clearInterval(timer)
     }
 }
 
@@ -262,50 +312,60 @@ function clearClassesAndContent() {
     }
 }
 
-function clickable() {
-    return $(this).hasClass("clickable");
+function unclickable(element) {
+    return $(element).hasClass(UNCLICKABLE_CSS);
 }
 
 function cellClicked() {
     let cell = game.getCellByID(this.id)
-    // console.log(grid);
+    // console.log(grid);'
+    if (unclickable(this)) {
+        return;
+    }
+    if (clickCount === 0){
+        timer = startTimer();
+    }
     if (!cell.hasRevealed && !cell.hasFlag) {
         if (cell.isMine) {
             game.revealAllMines()
             game.isGameOver = true
         } else {
             game.revealCell(cell)
+            if (game.isWin()) {
+                game.isGameOver = true
+                game.revealAllMines()
+            }
         }
+        clickCount++
         render()
     }
 
 }
 
-function restart() {
-    clearClassesAndContent()
-    init()
-}
-
-// function removeListeners() {
-//     $('tbody').off('click', 'td', cellClicked);
-//     $('tbody').off('contextmenu', 'td', markFlag)
-// }
-
-function createBoardHtml() {
-    let $boardTbody = $('.board-tbody')
-    for (let i of game.board) {
-        
-        for (let j of game[i]) {
-            let grid = board[i][j]
-            
-        }
+function changeDifficulty() {
+    console.log("changedifficulty");
+    let option = this.value;
+    let difficulty
+    if (option === "easy"){
+        difficulty = EASY_MODE
+    } else if (option === "medium") {
+        difficulty = MEDIUM_MODE
+    } else if (option === "hard") {
+        difficulty = HARD_MODE
+    } else {
+        return;
     }
+    createBoardTable(difficulty)
 }
 
 // let user be a le to right click to indicate possible mine
 // render()
 function markFlag() {
+    console.log("markFlag() ");
     let $td = $(this)
+    if (unclickable(this)) {
+        return false;
+    }
     let id = $td.attr("id")
     let cell = game.getCellByID(id);
     if (!cell.hasRevealed) {
@@ -316,28 +376,21 @@ function markFlag() {
         }
         render()
     }
-    // if (!$td.hasClass("revealed")) {
-    //     let cell = game.getCellByID($td.attr('id'))
-    //     if ($td.hasClass("flag")) {
-    //         cell.hasFlag = false
-    //         $td.removeClass("flag")
-    //     } else {
-    //         cell.hasFlag = true
-    //         $td.addClass("flag")
-    //     }
-    // }
     return false
 } 
 
-// Record the time needed to clear the game
-// ENHANCE
-function timer() {
-
+// Record the time used to clear the game
+function startTimer() {
+    return setInterval(updateTimer, 1000);
 }
 
-// Change difficulty
-// init()
-function chooseDifficulty() {
-
+function updateTimer() {
+    timeUsedInSeconds++
+    $time.text(timeUsedInSeconds + " sec")
 }
 
+function resetDisplay() {
+    $win.addClass(HIDE_CSS)
+    $lose.addClass(HIDE_CSS)
+    $time.text("0 sec");
+}

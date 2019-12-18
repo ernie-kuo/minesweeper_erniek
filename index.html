@@ -12,9 +12,8 @@
 <body>
     <h1>Minesweeper</h1>
     <main>
-
-        <table cellspacing="0">
-            <tbody class="board-tbody">
+        <table cellspacing="0" class="board-table">
+            <!-- <tbody class="board-tbody">
                 <tr>
                     <td class="cell" id="00"></td>
                     <td class="cell" id="01"></td>
@@ -135,11 +134,34 @@
                     <td class="cell" id="98"></td>
                     <td class="cell" id="99"></td>
                 </tr>
-            </tbody>
+            </tbody> -->
         </table>
-        <button class="restart">
-            Restart
-        </button>
+        <div class="button-holder">
+            <button class="restart">
+                    Restart
+            </button>
+            <select class="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        <div class="display">
+                Number Of Mines:<span class="total-mines"></span>
+
+            <div>
+                Time Used: <span class="time">0 sec</span>
+            </div>
+
+            <div class="game-over">
+                <span class="win hide">
+                    YOU WIN!
+                </span>
+                <span class="lose hide">
+                    TRY AGAIN!
+                </span>
+            </div>
+        </div>
     </main>
 </body>
 </html>
