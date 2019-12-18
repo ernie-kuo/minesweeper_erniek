@@ -8,17 +8,21 @@ const $totalMines = $('.total-mines')
 const $time = $('.time')
 const $win = $('.win')
 const $lose = $('.lose')
+
+/*----- app state variables-----*/
+var timer
+var timeUsedInSeconds
+var game
+var clickCount
+
 /*----- event listeners -----*/
 
 $(document).ready(function() {
-    var timer
-    var timeUsedInSeconds
-    var game
-    var clickCount
     createBoardTable(EASY_MODE)
     $restartBtn.on('click', restart)
     $difficulty.on('change', changeDifficulty)
-    // init()
+    attachListeners()
+    $('body').on('keyup', restart)
 })
 
 
@@ -30,12 +34,12 @@ const EASY_MODE = {
     height: 10
 }
 const MEDIUM_MODE = {
-    totalMine : 35,
+    totalMine : 50,
     width : 15,
     height : 15
 }
 const HARD_MODE = {
-    totalMine: 70,
+    totalMine: 100,
     width: 20,
     height: 20
 }
@@ -67,7 +71,7 @@ class Cell {
     }
 
     getID() {
-        return '#' + this.x + this.y;
+        return '#' + this.x + "-" + this.y;
     }
 
     
@@ -165,14 +169,15 @@ class Game {
     }
 
     getCellByID(stringID) {
-        if (stringID.length !== 2) {
-            console.log("ID format is incorrect: " + stringID)
-        } else {
+        // if (stringID.length !== 2) {
+        //     console.log("ID format is incorrect: " + stringID)
+        // } else {
             // console.log("getGridByID ID: " + stringID)
-            let x = Number(stringID[0])
-            let y = Number(stringID[1])
+            let arr = stringID.split('-');
+            let x = Number(arr[0])
+            let y = Number(arr[1])
             return this.board[x][y]
-        }
+        // }
     }
 
     revealAllMines() {
@@ -235,28 +240,51 @@ function init(difficulty = EASY_MODE) {
     render()
 }
 
-function restart() {
-    if (timeUsedInSeconds > 0){
-        console.log("clearInterval trigger  ")
-        clearInterval(timer)
-    }
-    init(game.difficulty)
+function stopAndClear() {
+    // if (timeUsedInSeconds > 0){
+    //     console.log("clearInterval trigger  ")
+    //     clearInterval(timer)
+    // }
+    clearInterval(timer)
     clearClassesAndContent()
     resetDisplay()
 }
 
+function restart() {
+    stopAndClear()
+    init(game.difficulty)
+}
+
 function createBoardTable(difficulty) {
+    
     $table.html("")
     let table = $table[0]
     for (let i = 0; i < difficulty.width; i++) {
         let tr = table.insertRow()
         for (let j = 0; j < difficulty.height; j++) {
             let td = tr.insertCell()
-            td.id = '' + i + j
+            td.id = i + "-" + j
         }
     }
     init(difficulty)
-    attachListeners()
+    stopAndClear()
+    // attachListeners()
+}
+
+function changeDifficulty() {
+    console.log("changedifficulty");
+    let option = this.value;
+    let difficulty
+    if (option === "easy"){
+        difficulty = EASY_MODE
+    } else if (option === "medium") {
+        difficulty = MEDIUM_MODE
+    } else if (option === "hard") {
+        difficulty = HARD_MODE
+    } else {
+        return;
+    }
+    createBoardTable(difficulty)
 }
 
 function attachListeners() {
@@ -340,22 +368,6 @@ function cellClicked() {
         render()
     }
 
-}
-
-function changeDifficulty() {
-    console.log("changedifficulty");
-    let option = this.value;
-    let difficulty
-    if (option === "easy"){
-        difficulty = EASY_MODE
-    } else if (option === "medium") {
-        difficulty = MEDIUM_MODE
-    } else if (option === "hard") {
-        difficulty = HARD_MODE
-    } else {
-        return;
-    }
-    createBoardTable(difficulty)
 }
 
 // let user be a le to right click to indicate possible mine
