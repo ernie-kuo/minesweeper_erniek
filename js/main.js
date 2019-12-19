@@ -1,9 +1,7 @@
 /*----- cached element references -----*/
-const $tableContainer = $('.table-container')
 const $table = $('.board-table')
 const $restartBtn = $('.restart')
 const $difficulty = $('.difficulty')
-const $diplay = $('.display')
 const $totalMines = $('.total-mines')
 const $time = $('.time')
 const $win = $('.win')
@@ -19,8 +17,6 @@ var clickCount
 
 $(document).ready(function() {
     createBoardTable(EASY_MODE)
-    $restartBtn.on('click', restart)
-    $difficulty.on('change', changeDifficulty)
     attachListeners()
     $('body').on('keyup', restart)
 })
@@ -48,7 +44,6 @@ const MINE_CSS = "mine"
 const REVEALED_CSS = "revealed"
 const DEFAULT_CSS = "default"
 const FLAG_CSS = "flag"
-const CLICKABLE_CSS = "clickable"
 const UNCLICKABLE_CSS = "unclickable"
 const HIDE_CSS = "hide"
 
@@ -154,30 +149,19 @@ class Game {
         
         for (let i = Math.max(0, cell.x-1); i <= Math.min(maximumColumnIndex, cell.x+1); i++) {
             for (let j = Math.max(0, cell.y-1); j <= Math.min(maximumRowIndex, cell.y+1); j++) {
-                // console.log(`Current Index: ${i}${j}`)
-                // console.log("The current mine of grid");
-                // console.log(grid)
-                if (cell.x === i && cell.y === j) {
-                   
-                } else {
+                if (cell.x !== i || cell.y !== j) {
                     listOfNeighbors.push(this.board[i][j])
                 }
             }
         }
-
         return listOfNeighbors;
     }
 
     getCellByID(stringID) {
-        // if (stringID.length !== 2) {
-        //     console.log("ID format is incorrect: " + stringID)
-        // } else {
-            // console.log("getGridByID ID: " + stringID)
-            let arr = stringID.split('-');
-            let x = Number(arr[0])
-            let y = Number(arr[1])
-            return this.board[x][y]
-        // }
+        let arr = stringID.split('-');
+        let x = Number(arr[0])
+        let y = Number(arr[1])
+        return this.board[x][y]
     }
 
     revealAllMines() {
@@ -230,21 +214,15 @@ class Game {
 // Populates hints around mines
 // Call render
 function init(difficulty = EASY_MODE) {
-    // console.log('global int()')
     game = new Game(difficulty)
     clickCount = 0
     timeUsedInSeconds = 0
     game.init()
-    // attachListeners()
     $totalMines.text(game.difficulty.totalMine);
     render()
 }
 
 function stopAndClear() {
-    // if (timeUsedInSeconds > 0){
-    //     console.log("clearInterval trigger  ")
-    //     clearInterval(timer)
-    // }
     clearInterval(timer)
     clearClassesAndContent()
     resetDisplay()
@@ -256,7 +234,6 @@ function restart() {
 }
 
 function createBoardTable(difficulty) {
-    
     $table.html("")
     let table = $table[0]
     for (let i = 0; i < difficulty.width; i++) {
@@ -268,11 +245,9 @@ function createBoardTable(difficulty) {
     }
     init(difficulty)
     stopAndClear()
-    // attachListeners()
 }
 
 function changeDifficulty() {
-    console.log("changedifficulty");
     let option = this.value;
     let difficulty
     if (option === "easy"){
@@ -288,13 +263,10 @@ function changeDifficulty() {
 }
 
 function attachListeners() {
+    $restartBtn.on('click', restart)
+    $difficulty.on('change', changeDifficulty)
     $table.on('click', 'td', cellClicked)
     $table.on('contextmenu', 'td', markFlag)
-}
-
-function removeListners() {
-    $table.off('click', 'td', cellClicked)
-    $table.off('contextmenu', 'td', markFlag)
 }
 
 // Changed the view based on state
@@ -346,7 +318,6 @@ function unclickable(element) {
 
 function cellClicked() {
     let cell = game.getCellByID(this.id)
-    // console.log(grid);'
     if (unclickable(this)) {
         return;
     }
@@ -373,7 +344,6 @@ function cellClicked() {
 // let user be a le to right click to indicate possible mine
 // render()
 function markFlag() {
-    console.log("markFlag() ");
     let $td = $(this)
     if (unclickable(this)) {
         return false;
