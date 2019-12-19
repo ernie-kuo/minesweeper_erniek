@@ -1,1 +1,378 @@
-console.log("testing");
+/*----- cached element references -----*/
+const $table = $('.board-table')
+const $restartBtn = $('.restart')
+const $difficulty = $('.difficulty')
+const $totalMines = $('.total-mines')
+const $time = $('.time')
+const $win = $('.win')
+const $lose = $('.lose')
+
+/*----- app state variables-----*/
+var timer
+var timeUsedInSeconds
+var game
+var clickCount
+
+/*----- event listeners -----*/
+
+$(document).ready(function() {
+    createBoardTable(EASY_MODE)
+    attachListeners()
+    $('body').on('keyup', restart)
+})
+
+
+/*----- constants -----*/
+
+const EASY_MODE = {
+    totalMine : 15,
+    width: 10,
+    height: 10
+}
+const MEDIUM_MODE = {
+    totalMine : 50,
+    width : 15,
+    height : 15
+}
+const HARD_MODE = {
+    totalMine: 100,
+    width: 20,
+    height: 20
+}
+
+const MINE_CSS = "mine"
+const REVEALED_CSS = "revealed"
+const DEFAULT_CSS = "default"
+const FLAG_CSS = "flag"
+const UNCLICKABLE_CSS = "unclickable"
+const HIDE_CSS = "hide"
+
+
+/*----- functions -----*/
+
+class Cell {
+    constructor(x, y) {
+        this.x = x
+        this.y = y
+        this.isMine = false
+        this.hasHint = false
+        this.hint = 0
+        this.hasFlag = false
+        this.hasRevealed = false;
+    }
+
+    equals(cell) {
+        return this.x === cell.x && this.y === cell.y 
+    }
+
+    getID() {
+        return '#' + this.x + "-" + this.y;
+    }
+
+    
+}
+
+class Game {
+    constructor(difficulty = EASY_MODE) {
+        this.difficulty = difficulty
+        this.board = []
+        this.mines = []
+        this.isGameOver = false;
+    }
+
+    init() {
+        this.createBoard()
+        this.populateMines()
+        this.populateHints()
+    }
+
+    createBoard() {
+        // console.log("Creating Board...")
+        for (let i = 0; i < this.difficulty.width; i++) {
+            let currentColumn = [];
+            for (let j = 0; j < this.difficulty.height; j++) {
+                currentColumn.push(new Cell(i, j))
+            }
+            this.board.push(currentColumn);
+        }
+        // console.log("board: ")
+        // console.log(this.board)
+    }
+
+    populateMines() {
+        // console.log("Populating Mines...")
+        while (this.mines.length < this.difficulty.totalMine) {
+            let randomX = Math.floor(Math.random() * this.difficulty.width)
+            let randomY = Math.floor(Math.random() * this.difficulty.height)
+            let mine = this.board[randomX][randomY]
+            if (!mine.isMine) {
+                mine.isMine = true
+                this.mines.push(mine)
+            }
+        }
+        // console.log(this.mines);
+    }
+
+    populateHints() {
+        // console.log("Populating hints...")
+        for (let mine of this.mines) {
+            // console.log("this.mine: ")
+            // console.log(this.mines)
+            let neighborsOfMine = this.getNeighbors(mine)
+            // console.log("Neighbors of Mine")
+            // console.log(neighborsOfMine)
+            for (let neighbor of neighborsOfMine) {
+                if (!neighbor.hasHint) {
+                    let neighborsOfNeighbor = this.getNeighbors(neighbor)
+                    // console.log("Neighbors of Neighbor");
+                    // console.log(neighborsOfNeighbor);
+                    let hint = 0
+                    for (let neighborOfNeighbor of neighborsOfNeighbor) {
+                        if (neighborOfNeighbor.isMine) {
+                            hint++
+                        }
+                    }
+                    neighbor.hint = hint
+                    if (neighbor.hint > 0) {
+                        neighbor.hasHint = true;
+                    }
+                }
+            }
+        }
+
+    }
+
+    getNeighbors(cell) {
+        let listOfNeighbors = []
+        let maximumColumnIndex = this.difficulty.width-1
+        let maximumRowIndex = this.difficulty.height-1
+        
+        for (let i = Math.max(0, cell.x-1); i <= Math.min(maximumColumnIndex, cell.x+1); i++) {
+            for (let j = Math.max(0, cell.y-1); j <= Math.min(maximumRowIndex, cell.y+1); j++) {
+                if (cell.x !== i || cell.y !== j) {
+                    listOfNeighbors.push(this.board[i][j])
+                }
+            }
+        }
+        return listOfNeighbors;
+    }
+
+    getCellByID(stringID) {
+        let arr = stringID.split('-');
+        let x = Number(arr[0])
+        let y = Number(arr[1])
+        return this.board[x][y]
+    }
+
+    revealAllMines() {
+       for (let mine of this.mines) {
+           mine.hasRevealed = true;
+       }
+    }
+
+    revealCell(cell) {
+        if (!cell.hasRevealed) {
+            cell.hasRevealed = true
+            if (!cell.hasHint) {
+                let neighbors = this.getNeighbors(cell)
+                for (let neighbor of neighbors) {
+                    if (!neighbor.hasHint) {
+                        this.revealCell(neighbor);
+                    } else {
+                        neighbor.hasRevealed = true;
+                    }
+                }
+            }
+        }
+    }
+
+    getNumOfOpenCells() {
+        let numberOfOpenCells = 0;
+        for (let column of this.board) {
+            for (let cell of column) {
+                if (cell.hasRevealed && !cell.isMine){
+                    numberOfOpenCells++
+                }
+            }
+        }
+        return numberOfOpenCells
+    }
+
+    getSizeOfBoard() {
+        return this.board.length * this.board[0].length
+    }
+
+    isWin() {
+        return this.getNumOfOpenCells() === (this.getSizeOfBoard() - this.difficulty.totalMine)
+    }
+}
+
+// Set state to default or starting state:
+// Default level is easy
+// Choose total number of mines based on level
+// Populates mines randomly over the grids -- populateMines()
+// Populates hints around mines
+// Call render
+function init(difficulty = EASY_MODE) {
+    game = new Game(difficulty)
+    clickCount = 0
+    timeUsedInSeconds = 0
+    game.init()
+    $totalMines.text(game.difficulty.totalMine);
+    render()
+}
+
+function stopAndClear() {
+    clearInterval(timer)
+    clearClassesAndContent()
+    resetDisplay()
+}
+
+function restart() {
+    stopAndClear()
+    init(game.difficulty)
+}
+
+function createBoardTable(difficulty) {
+    $table.html("")
+    let table = $table[0]
+    for (let i = 0; i < difficulty.width; i++) {
+        let tr = table.insertRow()
+        for (let j = 0; j < difficulty.height; j++) {
+            let td = tr.insertCell()
+            td.id = i + "-" + j
+        }
+    }
+    init(difficulty)
+    stopAndClear()
+}
+
+function changeDifficulty() {
+    let option = this.value;
+    let difficulty
+    if (option === "easy"){
+        difficulty = EASY_MODE
+    } else if (option === "medium") {
+        difficulty = MEDIUM_MODE
+    } else if (option === "hard") {
+        difficulty = HARD_MODE
+    } else {
+        return;
+    }
+    createBoardTable(difficulty)
+}
+
+function attachListeners() {
+    $restartBtn.on('click', restart)
+    $difficulty.on('change', changeDifficulty)
+    $table.on('click', 'td', cellClicked)
+    $table.on('contextmenu', 'td', markFlag)
+}
+
+// Changed the view based on state
+function render() {
+
+    for (let columns of game.board) {
+        for (let cell of columns) {
+            // console.log(grid)
+            let cellID = cell.getID()
+            let $cellEle = $(cellID)
+            if (game.isGameOver || game.isWin()) {
+                $cellEle.addClass(UNCLICKABLE_CSS)
+            }
+            if (cell.hasRevealed) {
+                $cellEle.addClass(REVEALED_CSS)
+                if (cell.isMine) {
+                    $cellEle.addClass(MINE_CSS)
+                } else if (cell.hasHint) {
+                    $cellEle.text(cell.hint)
+                }
+            } else {
+                (cell.hasFlag)? $cellEle.addClass(FLAG_CSS) : $cellEle.removeClass(FLAG_CSS)
+            }
+        }
+    }
+    
+    if (game.isWin()) {
+        $win.removeClass(HIDE_CSS)
+        clearInterval(timer)
+    } else if (game.isGameOver) {
+        $lose.removeClass(HIDE_CSS)
+        clearInterval(timer)
+    }
+}
+
+function clearClassesAndContent() {
+    for (let columns of game.board) {
+        for (let cell of columns) {
+            let $cellEle = $(cell.getID())
+            $cellEle.removeClass()
+            $cellEle.text("")
+        }
+    }
+}
+
+function unclickable(element) {
+    return $(element).hasClass(UNCLICKABLE_CSS);
+}
+
+function cellClicked() {
+    let cell = game.getCellByID(this.id)
+    if (unclickable(this)) {
+        return;
+    }
+    if (clickCount === 0){
+        timer = startTimer();
+    }
+    if (!cell.hasRevealed && !cell.hasFlag) {
+        if (cell.isMine) {
+            game.revealAllMines()
+            game.isGameOver = true
+        } else {
+            game.revealCell(cell)
+            if (game.isWin()) {
+                game.isGameOver = true
+                game.revealAllMines()
+            }
+        }
+        clickCount++
+        render()
+    }
+
+}
+
+// let user be a le to right click to indicate possible mine
+// render()
+function markFlag() {
+    let $td = $(this)
+    if (unclickable(this)) {
+        return false;
+    }
+    let id = $td.attr("id")
+    let cell = game.getCellByID(id);
+    if (!cell.hasRevealed) {
+        if (cell.hasFlag) {
+            cell.hasFlag = false;
+        } else {
+            cell.hasFlag = true;
+        }
+        render()
+    }
+    return false
+} 
+
+// Record the time used to clear the game
+function startTimer() {
+    return setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+    timeUsedInSeconds++
+    $time.text(timeUsedInSeconds + " sec")
+}
+
+function resetDisplay() {
+    $win.addClass(HIDE_CSS)
+    $lose.addClass(HIDE_CSS)
+    $time.text("0 sec");
+}
