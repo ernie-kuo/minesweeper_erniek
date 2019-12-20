@@ -40,6 +40,7 @@ const HARD_MODE = {
     height: 20
 }
 
+const FLAG_ICON_HTML = "<i class=\"fa fa-flag\" aria-hidden=\"true\"></i>"
 const MINE_CSS = "mine"
 const REVEALED_CSS = "revealed"
 const DEFAULT_CSS = "default"
@@ -288,7 +289,13 @@ function render() {
                     $cellEle.text(cell.hint)
                 }
             } else {
-                (cell.hasFlag)? $cellEle.addClass(FLAG_CSS) : $cellEle.removeClass(FLAG_CSS)
+                if (cell.hasFlag) {
+                    $cellEle.html(FLAG_ICON_HTML)
+                    $cellEle.addClass(FLAG_CSS)
+                } else {
+                    $cellEle.html("")
+                    $cellEle.removeClass(FLAG_CSS)
+                }
             }
         }
     }
