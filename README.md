@@ -5,6 +5,10 @@
 A standard minesweeper. The game started with a board filling with un-revealed cells and mines. Left-clicking through the board to reveal all cells without clicking on the mines. While clicking on a cell that is next to a mine, a hint of number will show in the cell that indicate how many mines are around the clciked-cell.
 
 ---
+
+![main screenshot](https://i.imgur.com/CSUTsLg.png "Screenshot")
+
+---
 #### Getting Started 
 
 [Link to the game](https://ernie-kuo.github.io/minesweeper_erniek/)
@@ -25,3 +29,5 @@ Javascript, JQuery, CSS, HTML
 #### Next Steps:
 
 - Make sure the first click will not be a mine
+- Ranks players by finish time
+- Clicking on the revealed hint cell with sufficient number of flags will auto reveal the neighbor cells like left clicking on each of them
