@@ -6,6 +6,7 @@ const $totalMines = $('.total-mines')
 const $time = $('.time')
 const $win = $('.win')
 const $lose = $('.lose')
+const $gameOver = $('.game-over')
 
 /*----- app state variables-----*/
 var timer
@@ -18,26 +19,26 @@ var clickCount
 $(document).ready(function() {
     createBoardTable(EASY_MODE)
     attachListeners()
-    $('body').on('keyup', restart)
+
 })
 
 
 /*----- constants -----*/
 
 const EASY_MODE = {
-    totalMine : 15,
-    width: 10,
+    totalMine : 10,
+    width: 8,
     height: 10
 }
 const MEDIUM_MODE = {
-    totalMine : 50,
-    width : 15,
-    height : 15
+    totalMine : 40,
+    width : 14,
+    height : 18
 }
 const HARD_MODE = {
-    totalMine: 100,
+    totalMine: 99,
     width: 20,
-    height: 20
+    height: 24
 }
 
 const FLAG_ICON_HTML = "<i class=\"fa fa-flag\" aria-hidden=\"true\"></i>"
@@ -88,7 +89,6 @@ class Game {
     }
 
     createBoard() {
-        // console.log("Creating Board...")
         for (let i = 0; i < this.difficulty.width; i++) {
             let currentColumn = [];
             for (let j = 0; j < this.difficulty.height; j++) {
@@ -96,12 +96,9 @@ class Game {
             }
             this.board.push(currentColumn);
         }
-        // console.log("board: ")
-        // console.log(this.board)
     }
 
     populateMines() {
-        // console.log("Populating Mines...")
         while (this.mines.length < this.difficulty.totalMine) {
             let randomX = Math.floor(Math.random() * this.difficulty.width)
             let randomY = Math.floor(Math.random() * this.difficulty.height)
@@ -111,22 +108,14 @@ class Game {
                 this.mines.push(mine)
             }
         }
-        // console.log(this.mines);
     }
 
     populateHints() {
-        // console.log("Populating hints...")
         for (let mine of this.mines) {
-            // console.log("this.mine: ")
-            // console.log(this.mines)
             let neighborsOfMine = this.getNeighbors(mine)
-            // console.log("Neighbors of Mine")
-            // console.log(neighborsOfMine)
             for (let neighbor of neighborsOfMine) {
                 if (!neighbor.hasHint) {
                     let neighborsOfNeighbor = this.getNeighbors(neighbor)
-                    // console.log("Neighbors of Neighbor");
-                    // console.log(neighborsOfNeighbor);
                     let hint = 0
                     for (let neighborOfNeighbor of neighborsOfNeighbor) {
                         if (neighborOfNeighbor.isMine) {
@@ -268,6 +257,8 @@ function attachListeners() {
     $difficulty.on('change', changeDifficulty)
     $table.on('click', 'td', cellClicked)
     $table.on('contextmenu', 'td', markFlag)
+    $('body').on('keyup', restart)
+    $gameOver.on('click', ()=>$gameOver.addClass(HIDE_CSS))
 }
 
 // Changed the view based on state
@@ -275,7 +266,6 @@ function render() {
 
     for (let columns of game.board) {
         for (let cell of columns) {
-            // console.log(grid)
             let cellID = cell.getID()
             let $cellEle = $(cellID)
             if (game.isGameOver || game.isWin()) {
@@ -300,11 +290,13 @@ function render() {
         }
     }
     
-    if (game.isWin()) {
-        $win.removeClass(HIDE_CSS)
-        clearInterval(timer)
-    } else if (game.isGameOver) {
-        $lose.removeClass(HIDE_CSS)
+    if (game.isGameOver || game.isWin()) {
+        $gameOver.removeClass(HIDE_CSS)
+        if (game.isGameOver) {
+            $lose.removeClass(HIDE_CSS)
+        } else {
+            $win.removeClass(HIDE_CSS)
+        }
         clearInterval(timer)
     }
 }
@@ -381,5 +373,6 @@ function updateTimer() {
 function resetDisplay() {
     $win.addClass(HIDE_CSS)
     $lose.addClass(HIDE_CSS)
+    $gameOver.addClass(HIDE_CSS)
     $time.text("0 sec");
 }
