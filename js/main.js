@@ -83,8 +83,6 @@ class Game {
 
     init() {
         this.createBoard()
-        this.populateMines()
-        this.populateHints()
     }
 
     createBoard() {
@@ -97,14 +95,20 @@ class Game {
         }
     }
 
-    populateMines() {
+    populateMines(cell) {
+        // To prevent players lose on the first click, the cell being clicked and its neighbors should be excluded from being mines
+        let excludedCells = this.getNeighbors(cell)
+        excludedCells.push(cell)
         while (this.mines.length < this.difficulty.totalMine) {
             let randomX = Math.floor(Math.random() * this.difficulty.width)
             let randomY = Math.floor(Math.random() * this.difficulty.height)
             let mine = this.board[randomX][randomY]
+            // Check the random cell is a mine or not to avoid duplicates
             if (!mine.isMine) {
-                mine.isMine = true
-                this.mines.push(mine)
+                if (!excludedCells.includes(mine)){
+                    mine.isMine = true
+                    this.mines.push(mine)
+                }
             }
         }
     }
@@ -325,6 +329,8 @@ function cellClicked() {
     }
     if (clickCount === 0){
         timer = startTimer();
+        game.populateMines(cell)
+        game.populateHints()
     }
     if (!cell.hasRevealed && !cell.hasFlag) {
         if (cell.isMine) {
