@@ -292,10 +292,10 @@ function render() {
     
     if (game.isGameOver || game.isWin()) {
         $gameOver.removeClass(HIDE_CSS)
-        if (game.isGameOver) {
-            $lose.removeClass(HIDE_CSS)
-        } else {
+        if (game.isWin()) {
             $win.removeClass(HIDE_CSS)
+        } else {
+            $lose.removeClass(HIDE_CSS)
         }
         clearInterval(timer)
     }
