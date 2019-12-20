@@ -3,6 +3,7 @@ const $table = $('.board-table')
 const $restartBtn = $('.restart')
 const $difficulty = $('.difficulty')
 const $totalMines = $('.total-mines')
+const $totalFlags = $('.total-flags')
 const $time = $('.time')
 const $win = $('.win')
 const $lose = $('.lose')
@@ -13,13 +14,13 @@ var timer
 var timeUsedInSeconds
 var game
 var clickCount
+var flagCount
 
 /*----- event listeners -----*/
 
 $(document).ready(function() {
     createBoardTable(EASY_MODE)
     attachListeners()
-
 })
 
 
@@ -70,8 +71,6 @@ class Cell {
     getID() {
         return '#' + this.x + "-" + this.y;
     }
-
-    
 }
 
 class Game {
@@ -161,16 +160,17 @@ class Game {
     }
 
     revealCell(cell) {
+        // remove flags that are on cells that cam be revealed
+        if (cell.hasFlag){
+            cell.hasFlag = false
+            flagCount--
+        }
         if (!cell.hasRevealed) {
             cell.hasRevealed = true
             if (!cell.hasHint) {
                 let neighbors = this.getNeighbors(cell)
                 for (let neighbor of neighbors) {
-                    if (!neighbor.hasHint) {
-                        this.revealCell(neighbor);
-                    } else {
-                        neighbor.hasRevealed = true;
-                    }
+                    this.revealCell(neighbor)
                 }
             }
         }
@@ -207,8 +207,10 @@ function init(difficulty = EASY_MODE) {
     game = new Game(difficulty)
     clickCount = 0
     timeUsedInSeconds = 0
+    flagCount = 0
     game.init()
     $totalMines.text(game.difficulty.totalMine);
+    $totalFlags.text(flagCount)
     render()
 }
 
@@ -271,6 +273,13 @@ function render() {
             if (game.isGameOver || game.isWin()) {
                 $cellEle.addClass(UNCLICKABLE_CSS)
             }
+            if (cell.hasFlag) {
+                $cellEle.html(FLAG_ICON_HTML)
+                $cellEle.addClass(FLAG_CSS)
+            } else {
+                $cellEle.html("")
+                $cellEle.removeClass(FLAG_CSS)
+            }
             if (cell.hasRevealed) {
                 $cellEle.addClass(REVEALED_CSS)
                 if (cell.isMine) {
@@ -278,18 +287,12 @@ function render() {
                 } else if (cell.hasHint) {
                     $cellEle.text(cell.hint)
                 }
-            } else {
-                if (cell.hasFlag) {
-                    $cellEle.html(FLAG_ICON_HTML)
-                    $cellEle.addClass(FLAG_CSS)
-                } else {
-                    $cellEle.html("")
-                    $cellEle.removeClass(FLAG_CSS)
-                }
             }
         }
     }
     
+    $totalFlags.text(flagCount)
+
     if (game.isGameOver || game.isWin()) {
         $gameOver.removeClass(HIDE_CSS)
         if (game.isWin()) {
@@ -352,8 +355,10 @@ function markFlag() {
     if (!cell.hasRevealed) {
         if (cell.hasFlag) {
             cell.hasFlag = false;
+            flagCount--
         } else {
             cell.hasFlag = true;
+            flagCount++
         }
         render()
     }
@@ -375,4 +380,5 @@ function resetDisplay() {
     $lose.addClass(HIDE_CSS)
     $gameOver.addClass(HIDE_CSS)
     $time.text("0 sec");
+    $totalFlags.text("0");
 }
