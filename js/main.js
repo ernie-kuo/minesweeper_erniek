@@ -3,43 +3,46 @@ const $table = $('.board-table')
 const $restartBtn = $('.restart')
 const $difficulty = $('.difficulty')
 const $totalMines = $('.total-mines')
+const $totalFlags = $('.total-flags')
 const $time = $('.time')
 const $win = $('.win')
 const $lose = $('.lose')
+const $gameOver = $('.game-over')
 
 /*----- app state variables-----*/
 var timer
 var timeUsedInSeconds
 var game
 var clickCount
+var flagCount
 
 /*----- event listeners -----*/
 
 $(document).ready(function() {
     createBoardTable(EASY_MODE)
     attachListeners()
-    $('body').on('keyup', restart)
 })
 
 
 /*----- constants -----*/
 
 const EASY_MODE = {
-    totalMine : 15,
-    width: 10,
+    totalMine : 10,
+    width: 8,
     height: 10
 }
 const MEDIUM_MODE = {
-    totalMine : 50,
-    width : 15,
-    height : 15
+    totalMine : 40,
+    width : 14,
+    height : 18
 }
 const HARD_MODE = {
-    totalMine: 100,
+    totalMine: 99,
     width: 20,
-    height: 20
+    height: 24
 }
 
+const FLAG_ICON_HTML = "<i class=\"fa fa-flag\" aria-hidden=\"true\"></i>"
 const MINE_CSS = "mine"
 const REVEALED_CSS = "revealed"
 const DEFAULT_CSS = "default"
@@ -68,8 +71,6 @@ class Cell {
     getID() {
         return '#' + this.x + "-" + this.y;
     }
-
-    
 }
 
 class Game {
@@ -87,7 +88,6 @@ class Game {
     }
 
     createBoard() {
-        // console.log("Creating Board...")
         for (let i = 0; i < this.difficulty.width; i++) {
             let currentColumn = [];
             for (let j = 0; j < this.difficulty.height; j++) {
@@ -95,12 +95,9 @@ class Game {
             }
             this.board.push(currentColumn);
         }
-        // console.log("board: ")
-        // console.log(this.board)
     }
 
     populateMines() {
-        // console.log("Populating Mines...")
         while (this.mines.length < this.difficulty.totalMine) {
             let randomX = Math.floor(Math.random() * this.difficulty.width)
             let randomY = Math.floor(Math.random() * this.difficulty.height)
@@ -110,22 +107,14 @@ class Game {
                 this.mines.push(mine)
             }
         }
-        // console.log(this.mines);
     }
 
     populateHints() {
-        // console.log("Populating hints...")
         for (let mine of this.mines) {
-            // console.log("this.mine: ")
-            // console.log(this.mines)
             let neighborsOfMine = this.getNeighbors(mine)
-            // console.log("Neighbors of Mine")
-            // console.log(neighborsOfMine)
             for (let neighbor of neighborsOfMine) {
                 if (!neighbor.hasHint) {
                     let neighborsOfNeighbor = this.getNeighbors(neighbor)
-                    // console.log("Neighbors of Neighbor");
-                    // console.log(neighborsOfNeighbor);
                     let hint = 0
                     for (let neighborOfNeighbor of neighborsOfNeighbor) {
                         if (neighborOfNeighbor.isMine) {
@@ -171,16 +160,17 @@ class Game {
     }
 
     revealCell(cell) {
+        // remove flags that are on cells that cam be revealed
+        if (cell.hasFlag){
+            cell.hasFlag = false
+            flagCount--
+        }
         if (!cell.hasRevealed) {
             cell.hasRevealed = true
             if (!cell.hasHint) {
                 let neighbors = this.getNeighbors(cell)
                 for (let neighbor of neighbors) {
-                    if (!neighbor.hasHint) {
-                        this.revealCell(neighbor);
-                    } else {
-                        neighbor.hasRevealed = true;
-                    }
+                    this.revealCell(neighbor)
                 }
             }
         }
@@ -217,8 +207,10 @@ function init(difficulty = EASY_MODE) {
     game = new Game(difficulty)
     clickCount = 0
     timeUsedInSeconds = 0
+    flagCount = 0
     game.init()
     $totalMines.text(game.difficulty.totalMine);
+    $totalFlags.text(flagCount)
     render()
 }
 
@@ -267,6 +259,8 @@ function attachListeners() {
     $difficulty.on('change', changeDifficulty)
     $table.on('click', 'td', cellClicked)
     $table.on('contextmenu', 'td', markFlag)
+    $('body').on('keyup', restart)
+    $gameOver.on('click', ()=>$gameOver.addClass(HIDE_CSS))
 }
 
 // Changed the view based on state
@@ -274,11 +268,17 @@ function render() {
 
     for (let columns of game.board) {
         for (let cell of columns) {
-            // console.log(grid)
             let cellID = cell.getID()
             let $cellEle = $(cellID)
             if (game.isGameOver || game.isWin()) {
                 $cellEle.addClass(UNCLICKABLE_CSS)
+            }
+            if (cell.hasFlag) {
+                $cellEle.html(FLAG_ICON_HTML)
+                $cellEle.addClass(FLAG_CSS)
+            } else {
+                $cellEle.html("")
+                $cellEle.removeClass(FLAG_CSS)
             }
             if (cell.hasRevealed) {
                 $cellEle.addClass(REVEALED_CSS)
@@ -287,17 +287,19 @@ function render() {
                 } else if (cell.hasHint) {
                     $cellEle.text(cell.hint)
                 }
-            } else {
-                (cell.hasFlag)? $cellEle.addClass(FLAG_CSS) : $cellEle.removeClass(FLAG_CSS)
             }
         }
     }
     
-    if (game.isWin()) {
-        $win.removeClass(HIDE_CSS)
-        clearInterval(timer)
-    } else if (game.isGameOver) {
-        $lose.removeClass(HIDE_CSS)
+    $totalFlags.text(flagCount)
+
+    if (game.isGameOver || game.isWin()) {
+        $gameOver.removeClass(HIDE_CSS)
+        if (game.isWin()) {
+            $win.removeClass(HIDE_CSS)
+        } else {
+            $lose.removeClass(HIDE_CSS)
+        }
         clearInterval(timer)
     }
 }
@@ -353,8 +355,10 @@ function markFlag() {
     if (!cell.hasRevealed) {
         if (cell.hasFlag) {
             cell.hasFlag = false;
+            flagCount--
         } else {
             cell.hasFlag = true;
+            flagCount++
         }
         render()
     }
@@ -374,5 +378,7 @@ function updateTimer() {
 function resetDisplay() {
     $win.addClass(HIDE_CSS)
     $lose.addClass(HIDE_CSS)
+    $gameOver.addClass(HIDE_CSS)
     $time.text("0 sec");
+    $totalFlags.text("0");
 }

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Bowlby+One+SC&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <script defer src="js/main.js"></script>
     <script src="js/jquery-3.4.1.min.js"></script>
@@ -12,7 +14,7 @@
 <body>
     <h1>Minesweeper</h1>
     <main>
-        <table cellspacing="0" class="board-table"></table>
+        <table cellspacing="1" class="board-table"></table>
         <div class="button-holder">
             <button class="restart">
                     Restart
@@ -24,13 +26,17 @@
             </select>
         </div>
         <div class="display">
-                Number Of Mines:<span class="total-mines"></span>
-
+            <div>            
+                Number of Mines:<span class="total-mines"></span>
+            </div>    
+            <div>
+                Number of Flags:<span class="total-flags"></span>
+            </div>
             <div>
                 Time Used: <span class="time">0 sec</span>
             </div>
 
-            <div class="game-over">
+            <div class="game-over hide">
                 <span class="win hide">
                     YOU WIN!
                 </span>
