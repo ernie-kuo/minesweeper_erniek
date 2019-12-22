@@ -28,6 +28,5 @@ Javascript, JQuery, CSS, HTML
 
 #### Next Steps:
 
-- Make sure the first click will not be a mine
 - Ranks players by finish time
 - Clicking on the revealed hint cell with sufficient number of flags will auto reveal the neighbor cells like left clicking on each of them
