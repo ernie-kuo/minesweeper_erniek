@@ -164,12 +164,7 @@ class Game {
     }
 
     revealCell(cell) {
-        // remove flags that are on cells that cam be revealed
-        if (cell.hasFlag){
-            cell.hasFlag = false
-            flagCount--
-        }
-        if (!cell.hasRevealed) {
+        if (!cell.hasRevealed && !cell.hasFlag) {
             cell.hasRevealed = true
             if (!cell.hasHint) {
                 let neighbors = this.getNeighbors(cell)
@@ -360,10 +355,10 @@ function markFlag() {
     let cell = game.getCellByID(id);
     if (!cell.hasRevealed) {
         if (cell.hasFlag) {
-            cell.hasFlag = false;
+            cell.hasFlag = false
             flagCount--
         } else {
-            cell.hasFlag = true;
+            cell.hasFlag = true
             flagCount++
         }
         render()
